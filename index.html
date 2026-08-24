@@ -163,7 +163,7 @@
         const spinBtn = document.getElementById('spin-button');
         const wheelImg = document.getElementById('wheel');
 
-        if (spinCount >= 2) spinBtn.classList.add('out-of-turns');
+        if (spinCount >= 20) spinBtn.classList.add('out-of-turns');
 
         // Tự động căn chỉnh kích thước vòng quay theo Poster
         function adjustWheel() {
@@ -177,8 +177,8 @@
 
         function startSpin() {
             if (isSpinning) return;
-            if (spinCount >= 2) {
-                alert("Bạn đã tham gia đủ 2 lượt quay may mắn!");
+            if (spinCount >= 20) {
+                alert("Bạn đã tham gia đủ 20 lượt quay may mắn!");
                 return;
             }
 
@@ -209,7 +209,7 @@
                 spinCount++;
                 localStorage.setItem('spin_dg_v12', spinCount);
                 
-                if (spinCount >= 2) spinBtn.classList.add('out-of-turns');
+                if (spinCount >= 20) spinBtn.classList.add('out-of-turns');
                 
                 showModal(prizes[prizeIndex].name);
             }, 5200); // 5.2s (khớp với transition 5s)
