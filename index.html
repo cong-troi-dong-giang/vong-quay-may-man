@@ -153,14 +153,27 @@
         /* =========================================
            4. LOGIC QUAY 1 CHIỀU KIM ĐỒNG HỒ
            ========================================= */
-        const prizes = [
-            { name: "TÚI VẢI" },           
-            { name: "VOUCHER MIỄN PHÍ VÉ THAM QUAN" }, 
-            { name: "TÚI CÓI" },           
-            { name: "STICKER" }, 
-            { name: "VOUCHER GIẢM 100K" },            
-            { name: "QUẠT" }         
+const prizes = [
+            { name: "TÚI VẢI", weight: 20 },    
+            { name: "VOUCHER MIỄN PHÍ VÉ THAM QUAN ", weight: 15 }, 
+            { name: "TÚI CÓI ", weight: 10 },   
+            { name: "STICKER ", weight: 20 }, 
+            { name: "VOUCHER GIẢM 100K ", weight: 15 },          
+            { name: "QUẠT ", weight: 20 }       
         ];
+
+        function startSpin() {
+            if (isSpinning) return;
+            isSpinning = true;
+
+            // 1. Thuật toán tỉ lệ trúng
+            let random = Math.floor(Math.random() * 100);
+            let cumulativeWeight = 0;
+            let prizeIndex = 0;
+            for (let i = 0; i < prizes.length; i++) {
+                cumulativeWeight += prizes[i].weight;
+                if (random < cumulativeWeight) { prizeIndex = i; break; }
+            }
 
         let isSpinning = false;
         let currentRotation = 0; 
@@ -189,6 +202,8 @@
 
             isSpinning = true;
             const prizeIndex = Math.floor(Math.random() * prizes.length);
+
+    
             
             // Tính toán góc dừng (Mũi tên ở vị trí 3 giờ)
             const segmentDeg = 360 / prizes.length; 
