@@ -157,34 +157,44 @@
         const MAX_SPINS = 20; // ĐÃ SỬA: Giới hạn 20 lần
         
         
-        const prizes = [
-            { name: "TÚI VẢI", weight: 30 },    
-            { name: "VOUCHER MIỄN PHÍ VÉ THAM QUAN ", weight: 5 }, 
-            { name: "TÚI CÓI ", weight: 10 },   
-            { name: "STICKER ", weight: 20 }, 
-            { name: "VOUCHER GIẢM 100K ", weight: 5 },          
-            { name: "QUẠT ", weight: 30 }       
-        ];
+const prizes = [
+    { name: "TÚI VẢI", weight: 30 },
+    { name: "VOUCHER MIỄN PHÍ VÉ THAM QUAN", weight: 5 },
+    { name: "TÚI CÓI", weight: 10 },
+    { name: "STICKER", weight: 20 },
+    { name: "VOUCHER GIẢM 100K", weight: 5 },
+    { name: "QUẠT", weight: 30 }
+];
 
-        function startSpin() {
-            if (isSpinning) return;
-            isSpinning = true;
+let isSpinning = false;
+let currentRotation = 0;
 
-            // 1. Thuật toán tỉ lệ trúng
-            let random = Math.floor(Math.random() * 100);
-            let cumulativeWeight = 0;
-            let prizeIndex = 0;
-            for (let i = 0; i < prizes.length; i++) {
-                cumulativeWeight += prizes[i].weight;
-                if (random < cumulativeWeight) { prizeIndex = i; break; }
-            }
+let spinCount = parseInt(localStorage.getItem('spin_dg_v20')) || 0;
 
-        let isSpinning = false;
-        let currentRotation = 0; // Biến tích lũy góc quay để luôn quay 1 chiều
-        
-        let spinCount = parseInt(localStorage.getItem('spin_dg_v20')) || 0;
-        const spinBtn = document.getElementById('spin-button');
-        const wheelImg = document.getElementById('wheel');
+const spinBtn = document.getElementById('spin-button');
+const wheelImg = document.getElementById('wheel');
+
+function startSpin() {
+    if (isSpinning) return;
+    isSpinning = true;
+
+    // Tổng weight = 100
+    const random = Math.floor(Math.random() * 100);
+
+    let cumulativeWeight = 0;
+    let prizeIndex = 0;
+
+    for (let i = 0; i < prizes.length; i++) {
+        cumulativeWeight += prizes[i].weight;
+
+        if (random < cumulativeWeight) {
+            prizeIndex = i;
+            break;
+        }
+    }
+
+    console.log("Trúng:", prizes[prizeIndex].name);
+}
 
         // Kiểm tra lượt ngay khi load trang
         if (spinCount >= MAX_SPINS) spinBtn.classList.add('out-of-turns');
