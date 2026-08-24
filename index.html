@@ -1,0 +1,52 @@
+{ name: "VOUCHER GIẢM 100K" },            
+            { name: "QUẠT" }         
+        ];
+
+        // Tự động căn chỉnh độ rộng vòng quay khớp với ảnh nền
+        function adjustWheel() {
+            const poster = document.getElementById('poster');
+            const wheelBox = document.getElementById('wheel-box');
+            if (poster.complete) {
+                wheelBox.style.width = (poster.clientWidth * 0.89) + "px";
+            }
+        }
+        window.addEventListener('resize', adjustWheel);
+        document.getElementById('poster').addEventListener('load', adjustWheel);
+
+        function startSpin() {
+            if (isSpinning) return;
+            if (spinCount >= 2) {
+                alert("Bạn đã tham gia đủ 2 lượt quay may mắn!");
+                return;
+            }
+
+            isSpinning = true;
+            let prizeIndex = Math.floor(Math.random() * prizes.length);
+
+            // Tính toán góc dừng ở mũi tên bên Phải (Vị trí 3 giờ)
+            let stopDegree = 90 - (prizeIndex * 60) - 30;
+            let totalSpin = (360 * 10) + stopDegree; 
+            currentRotation += totalSpin - (currentRotation % 360) + (stopDegree < (currentRotation % 360) ? 360 : 0);
+            
+            document.getElementById('wheel').style.transform = `rotate(${currentRotation}deg)`;
+
+            setTimeout(() => {
+                isSpinning = false;
+                spinCount++;
+                localStorage.setItem('spin_dg_final_v12', spinCount);
+                if (spinCount >= 2) document.getElementById('spin-button').classList.add('out-of-turns');
+                showModal(prizes[prizeIndex].name);
+            }, 5200);
+        }
+
+        function showModal(name) {
+            document.getElementById('prize-name').innerText = name;
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
