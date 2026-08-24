@@ -10,7 +10,7 @@
            ========================================= */
         :root {
             --primary-green: #014321; /* Xanh lá cây thương hiệu */
-            --prize-red: #d42020;    /* Đỏ cho phần thưởng */
+            --prize-red: #e60000;    /* Màu đỏ đậm cho phần thưởng */
             --light-green: #c1f0c1;
             --white: #ffffff;
             --transition-time: 5s; 
@@ -66,7 +66,7 @@
         }
 
         /* =========================================
-           3. MODAL THÔNG BÁO (ĐÃ CẬP NHẬT MÀU)
+           3. MODAL THÔNG BÁO (ĐÃ TỐI ƯU MÀU & VỊ TRÍ)
            ========================================= */
         .modal-overlay {
             position: fixed; inset: 0;
@@ -94,20 +94,24 @@
             font-size: 30px; color: #ccc; cursor: pointer;
         }
 
-        /* Cổng Trời Đông Giang -> MÀU XANH LÁ */
+        /* Chữ Cổng Trời Đông Giang màu XANH LÁ */
         .modal-content h2 { 
             color: var(--primary-green) !important; 
             margin: 0; font-size: 22px; font-weight: 800;
             text-transform: uppercase;
         }
 
-        .modal-content p { color: #444; font-size: 18px; margin: 25px 0 5px; }
+        .modal-content p { color: #444; font-size: 18px; margin: 25px 0 0px; }
 
-        /* Tên phần thưởng -> MÀU ĐỎ */
+        /* Chữ QUÀ TẶNG màu ĐỎ và XỊT XUỐNG 1 TÝ */
         .modal-content b {
             color: var(--prize-red) !important; 
-            font-size: 22px;
-            display: block; margin-bottom: 30px; font-weight: 800;
+            font-size: 24px;
+            display: block; 
+            margin-top: 15px; /* Đẩy xuống một chút */
+            margin-bottom: 35px; 
+            font-weight: 800;
+            line-height: 1.3;
         }
 
         .zalo-btn {
@@ -124,14 +128,17 @@
 <body>
 
     <div class="poster-container">
+        <!-- Ảnh nền Poster -->
         <img src="nen-back.jpg" class="bg-img" id="poster">
 
+        <!-- Khu vực vòng xoay -->
         <div class="wheel-area" id="wheel-box">
             <img src="vong-xoay.png" id="wheel" class="wheel-img">
             <img src="nut-quay.png" class="start-btn" id="spin-button" onclick="startSpin()">
         </div>
     </div>
 
+    <!-- Hộp thông báo -->
     <div class="modal-overlay" id="modal">
         <div class="modal-content">
             <span class="close-x" onclick="closeModal()">&times;</span>
@@ -146,7 +153,6 @@
         /* =========================================
            4. LOGIC QUAY 1 CHIỀU KIM ĐỒNG HỒ
            ========================================= */
-        
         const prizes = [
             { name: "TÚI VẢI" },           
             { name: "VOUCHER MIỄN PHÍ VÉ THAM QUAN" }, 
@@ -157,7 +163,7 @@
         ];
 
         let isSpinning = false;
-        let currentRotation = 0; // Lưu tổng góc quay tích lũy
+        let currentRotation = 0; 
         
         let spinCount = parseInt(localStorage.getItem('spin_dg_v12')) || 0;
         const spinBtn = document.getElementById('spin-button');
@@ -182,36 +188,28 @@
             }
 
             isSpinning = true;
-            
-            // 1. Chọn giải thưởng ngẫu nhiên
             const prizeIndex = Math.floor(Math.random() * prizes.length);
             
-            // 2. Tính toán góc dừng (Mũi tên ở vị trí 3 giờ - bên phải poster)
+            // Tính toán góc dừng (Mũi tên ở vị trí 3 giờ)
             const segmentDeg = 360 / prizes.length; 
             const stopOffset = 90 - (prizeIndex * segmentDeg) - (segmentDeg / 2);
             
-            // 3. LOGIC QUAY 1 CHIỀU TUYỆT ĐỐI:
-            // Thêm ít nhất 10 vòng quay toàn phần (3600 độ)
+            // Logic quay 1 chiều: Luôn cộng thêm ít nhất 10 vòng (3600 độ)
             const minFullSpins = 3600; 
-            
-            // Tìm góc cần quay thêm để khớp với vị trí stopOffset
             const currentMod = currentRotation % 360;
             let additionalDeg = (stopOffset - currentMod + 360) % 360;
             
-            // Nếu góc thêm quá nhỏ, cộng thêm 1 vòng để quay cho đẹp
             if (additionalDeg < 60) additionalDeg += 360;
 
-            // Cập nhật tổng góc quay (Giá trị này luôn tăng -> Quay 1 chiều kim đồng hồ)
+            // Cập nhật tổng góc quay (Giá trị tăng dần = Luôn quay kim đồng hồ)
             currentRotation += minFullSpins + additionalDeg;
             
             wheelImg.style.transform = `rotate(${currentRotation}deg)`;
 
-            // 4. Kết thúc
             setTimeout(() => {
                 isSpinning = false;
                 spinCount++;
                 localStorage.setItem('spin_dg_v12', spinCount);
-                
                 if (spinCount >= 2) spinBtn.classList.add('out-of-turns');
                 showModal(prizes[prizeIndex].name);
             }, 5200); 
