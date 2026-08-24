@@ -6,13 +6,13 @@
     <title>Vòng Quay May Mắn - Cổng Trời Đông Giang</title>
     <style>
         /* =========================================
-           1. THIẾT LẬP CHUNG & BIẾN
+           1. THIẾT LẬP CHUNG & BIẾN (TỐI ƯU)
            ========================================= */
         :root {
-            --primary-green: #014321;
+            --primary-green: #014321; /* Màu xanh thương hiệu */
             --light-green: #c1f0c1;
             --white: #ffffff;
-            --transition-time: 5s; /* Thời gian quay */
+            --transition-time: 5s; 
         }
 
         * { 
@@ -53,7 +53,7 @@
 
         .wheel-img {
             width: 100%; height: auto;
-            /* Luôn xoay mượt theo chiều kim đồng hồ */
+            /* Thiết lập quay mượt mà */
             transition: transform var(--transition-time) cubic-bezier(0.1, 0, 0.1, 1);
             will-change: transform;
         }
@@ -66,7 +66,7 @@
         }
 
         /* =========================================
-           3. MODAL THÔNG BÁO (NỀN TRẮNG)
+           3. MODAL THÔNG BÁO (CHỮ XANH)
            ========================================= */
         .modal-overlay {
             position: fixed; inset: 0;
@@ -94,9 +94,9 @@
             font-size: 30px; color: #ccc; cursor: pointer;
         }
 
-        /* Tên thương hiệu màu xanh theo yêu cầu */
+        /* ĐÃ SỬA: Chữ Cổng Trời Đông Giang luôn là màu xanh */
         .modal-content h2 { 
-            color: var(--primary-green); 
+            color: var(--primary-green) !important; 
             margin: 0; font-size: 22px; font-weight: 800;
             text-transform: uppercase;
         }
@@ -142,10 +142,9 @@
 
     <script>
         /* =========================================
-           4. JAVASCRIPT LOGIC
+           4. LOGIC QUAY (CHUYÊN NGHIỆP)
            ========================================= */
         
-        // Cấu hình phần thưởng (thứ tự khớp với ảnh vòng quay)
         const prizes = [
             { name: "TÚI VẢI" },           
             { name: "VOUCHER MIỄN PHÍ VÉ THAM QUAN" }, 
@@ -156,16 +155,15 @@
         ];
 
         let isSpinning = false;
-        let currentRotation = 0; // Lưu trữ góc quay tích lũy để quay 1 chiều
+        let currentRotation = 0; 
         
-        // Quản lý lượt quay
         let spinCount = parseInt(localStorage.getItem('spin_dg_v12')) || 0;
         const spinBtn = document.getElementById('spin-button');
         const wheelImg = document.getElementById('wheel');
 
-        if (spinCount >= 20) spinBtn.classList.add('out-of-turns');
+        // Giới hạn 2 lượt quay
+        if (spinCount >= 2) spinBtn.classList.add('out-of-turns');
 
-        // Tự động căn chỉnh kích thước vòng quay theo Poster
         function adjustWheel() {
             const poster = document.getElementById('poster');
             if (poster.complete) {
@@ -177,42 +175,45 @@
 
         function startSpin() {
             if (isSpinning) return;
-            if (spinCount >= 20) {
-                alert("Bạn đã tham gia đủ 20 lượt quay may mắn!");
+            if (spinCount >= 2) {
+                alert("Bạn đã tham gia đủ 2 lượt quay may mắn!");
                 return;
             }
 
             isSpinning = true;
             
-            // 1. Chọn phần thưởng ngẫu nhiên
+            // 1. Chọn giải thưởng ngẫu nhiên
             const prizeIndex = Math.floor(Math.random() * prizes.length);
             
-            // 2. Tính toán góc quay
-            // Một vòng 360 độ / 6 phần thưởng = 60 độ mỗi ô
-            // Để trúng prizeIndex, ô đó phải nằm ở kim chỉ (thường là bên phải - 90 độ)
-            const segmentDeg = 360 / prizes.length;
-            const targetOffset = 90 - (prizeIndex * segmentDeg) - (segmentDeg / 2);
+            // 2. Tính toán góc dừng (Mũi tên ở vị trí 3 giờ - bên phải)
+            const segmentDeg = 360 / prizes.length; // 60 độ mỗi ô
+            const stopOffset = 90 - (prizeIndex * segmentDeg) - (segmentDeg / 2);
             
-            // 3. Logic quay tiếp tục theo chiều kim đồng hồ
-            // Quay tối thiểu 8 vòng (360 * 8) + phần bù để đến đúng vị trí
-            const minRounds = 8;
-            const additionalDeg = (targetOffset - (currentRotation % 360) + 360) % 360;
+            // 3. LOGIC QUAY 1 CHIỀU: Luôn cộng thêm độ để góc quay tăng dần
+            // Thêm 3600 độ (10 vòng) để tạo hiệu ứng quay nhanh
+            const minRotation = 3600; 
             
-            currentRotation += (minRounds * 360) + additionalDeg;
+            // Tính toán góc quay thực tế để dừng đúng giải thưởng mà vẫn đảm bảo quay xuôi chiều
+            const currentMod = currentRotation % 360;
+            let extraDeg = (stopOffset - currentMod + 360) % 360;
+            
+            // Nếu góc bù quá nhỏ, cộng thêm 1 vòng nữa cho đẹp
+            if (extraDeg < 180) extraDeg += 360; 
+
+            currentRotation += minRotation + extraDeg;
             
             // Thực hiện quay
             wheelImg.style.transform = `rotate(${currentRotation}deg)`;
 
-            // 4. Kết thúc quay
+            // 4. Hiển thị kết quả
             setTimeout(() => {
                 isSpinning = false;
                 spinCount++;
                 localStorage.setItem('spin_dg_v12', spinCount);
                 
-                if (spinCount >= 20) spinBtn.classList.add('out-of-turns');
-                
+                if (spinCount >= 2) spinBtn.classList.add('out-of-turns');
                 showModal(prizes[prizeIndex].name);
-            }, 5200); // 5.2s (khớp với transition 5s)
+            }, 5200); 
         }
 
         function showModal(name) {
