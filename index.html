@@ -154,12 +154,12 @@
            4. LOGIC QUAY 1 CHIỀU KIM ĐỒNG HỒ
            ========================================= */
 const prizes = [
-            { name: "TÚI VẢI", weight: 20 },    
-            { name: "VOUCHER MIỄN PHÍ VÉ THAM QUAN ", weight: 15 }, 
+            { name: "TÚI VẢI", weight: 30 },    
+            { name: "VOUCHER MIỄN PHÍ VÉ THAM QUAN ", weight: 05 }, 
             { name: "TÚI CÓI ", weight: 10 },   
             { name: "STICKER ", weight: 20 }, 
-            { name: "VOUCHER GIẢM 100K ", weight: 15 },          
-            { name: "QUẠT ", weight: 20 }       
+            { name: "VOUCHER GIẢM 100K ", weight: 05 },          
+            { name: "QUẠT ", weight: 30 }       
         ];
 
         function startSpin() {
@@ -182,7 +182,7 @@ const prizes = [
         const spinBtn = document.getElementById('spin-button');
         const wheelImg = document.getElementById('wheel');
 
-        if (spinCount >= 2) spinBtn.classList.add('out-of-turns');
+        if (spinCount >= 20) spinBtn.classList.add('out-of-turns');
 
         function adjustWheel() {
             const poster = document.getElementById('poster');
@@ -195,8 +195,8 @@ const prizes = [
 
         function startSpin() {
             if (isSpinning) return;
-            if (spinCount >= 2) {
-                alert("Bạn đã tham gia đủ 2 lượt quay may mắn!");
+            if (spinCount >= 20) {
+                alert("Bạn đã tham gia đủ 20 lượt quay may mắn!");
                 return;
             }
 
@@ -225,7 +225,7 @@ const prizes = [
                 isSpinning = false;
                 spinCount++;
                 localStorage.setItem('spin_dg_v12', spinCount);
-                if (spinCount >= 2) spinBtn.classList.add('out-of-turns');
+                if (spinCount >= 20) spinBtn.classList.add('out-of-turns');
                 showModal(prizes[prizeIndex].name);
             }, 5200); 
         }
