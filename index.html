@@ -74,7 +74,7 @@
 
         .modal-content {
             background: var(--white);
-            width: 85%; max-width: 350px;
+            width: 90%; max-width: 400px;
             padding: 40px 20px 30px;
             border-radius: 25px; text-align: center;
             position: relative;
@@ -83,11 +83,21 @@
 
         @keyframes zoomIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 
-        .close-x { position: absolute; top: 15px; right: 20px; font-size: 30px; color: #ccc; cursor: pointer; }
-        .modal-content h2 { color: var(--primary-green) !important; margin: 0; font-size: 22px; font-weight: 800; text-transform: uppercase; }
-        .modal-content p { color: #444; font-size: 18px; margin: 20px 0 0; }
-        .modal-content b { color: var(--prize-red) !important; font-size: 22px; display: block; margin-top: 15px; margin-bottom: 30px; font-weight: 800; }
-        .zalo-btn { display: inline-block; background-color: var(--light-green); color: #004d26; text-decoration: none; padding: 15px 20px; border-radius: 12px; font-weight: 700; font-size: 12px; text-transform: uppercase; border: 1px solid #a8e0a8; }
+        .close-x { position: absolute; top: 10px; right: 20px; font-size: 35px; color: #ccc; cursor: pointer; }
+        
+        .modal-content h2 { color: var(--primary-green) !important; margin: 0; font-size: 20px; font-weight: 800; text-transform: uppercase; line-height: 1.2; }
+        .modal-content h2 span { display: block; font-size: 14px; opacity: 0.8; }
+
+        .modal-content p { color: #444; font-size: 16px; margin: 20px 0 0; line-height: 1.4; }
+        .modal-content p i { display: block; font-size: 14px; color: #666; font-style: normal; }
+
+        .prize-container { margin-top: 15px; margin-bottom: 30px; }
+        .prize-vi { color: var(--prize-red) !important; font-size: 24px; display: block; font-weight: 800; text-transform: uppercase; }
+        .prize-en { color: var(--prize-red) !important; font-size: 18px; display: block; font-weight: 600; text-transform: uppercase; opacity: 0.9; }
+
+        .zalo-btn { display: inline-block; background-color: var(--light-green); color: #004d26; text-decoration: none; padding: 12px 20px; border-radius: 12px; font-weight: 700; font-size: 11px; text-transform: uppercase; border: 1px solid #a8e0a8; line-height: 1.4; }
+        .zalo-btn span { display: block; font-size: 10px; opacity: 0.8; }
+        
         .out-of-turns { filter: grayscale(1); cursor: not-allowed; opacity: 0.8; }
     </style>
 </head>
@@ -106,29 +116,37 @@
     <div class="modal-overlay" id="modal">
         <div class="modal-content">
             <span class="close-x" onclick="closeModal()">&times;</span>
-            <h2>CỔNG TRỜI ĐÔNG GIANG</h2>
-            <p>Chúc mừng bạn đã nhận được:</p>
-            <b id="prize-name"></b>
-            <a href="https://zalo.me/1049758536530278164" target="_blank" class="zalo-btn">Zalo OA Cổng Trời Đông Giang</a>
+            <h2>CỔNG TRỜI ĐÔNG GIANG <span>DONG GIANG HEAVEN GATE</span></h2>
+            
+            <p>Chúc mừng bạn đã nhận được: <i>Congratulations! You have received:</i></p>
+            
+            <div class="prize-container">
+                <span id="prize-vi" class="prize-vi"></span>
+                <span id="prize-en" class="prize-en"></span>
+            </div>
+
+            <a href="https://zalo.me/1049758536530278164" target="_blank" class="zalo-btn">
+                Zalo OA Cổng Trời Đông Giang
+                <span>Official Account Dong Giang Heaven Gate</span>
+            </a>
         </div>
     </div>
 
     <script>
+        // Cập nhật danh sách quà tặng song ngữ
         const prizes = [
-            { name: "TÚI VẢI", weight: 30 },
-            { name: "VOUCHER MIỄN PHÍ VÉ THAM QUAN", weight: 5 },
-            { name: "TÚI THỔ CẨM", weight: 15 },
-            { name: "STICKER", weight: 15 },
-            { name: "VOUCHER GIẢM 100K", weight: 5 },
-            { name: "QUẠT", weight: 30 }
+            { vi: "TÚI VẢI", en: "Canvas Bag", weight: 30 },
+            { vi: "VOUCHER MIỄN PHÍ VÉ THAM QUAN", en: "Free Sightseeing Voucher", weight: 5 },
+            { vi: "TÚI THỔ CẨM", en: "Brocade Bag", weight: 15 },
+            { vi: "STICKER", en: "Sticker", weight: 15 },
+            { vi: "VOUCHER GIẢM 100K", en: "100K Discount Voucher", weight: 5 },
+            { vi: "QUẠT", en: "Hand Fan", weight: 30 }
         ];
 
-        // THAY ĐỔI TẠI ĐÂY: Giới hạn 2 lượt quay
         const MAX_SPINS = 2; 
         let isSpinning = false;
         let totalRotation = 0; 
         
-        // Đổi key storage sang v2 để reset lại lượt quay cho khách hàng
         let spinCount = parseInt(localStorage.getItem('spin_dg_v2')) || 0;
 
         const wheel = document.getElementById('wheel');
@@ -140,7 +158,7 @@
         function startSpin() {
             if (isSpinning) return;
             if (spinCount >= MAX_SPINS) {
-                alert("Bạn đã tham gia đủ 2 lượt quay!");
+                alert("Bạn đã tham gia đủ 2 lượt quay! \nYou have used all 2 turns!");
                 return;
             }
 
@@ -178,16 +196,16 @@
             setTimeout(() => {
                 isSpinning = false;
                 spinCount++;
-                // Lưu số lượt quay mới
                 localStorage.setItem('spin_dg_v2', spinCount);
                 if (spinCount >= MAX_SPINS) spinBtn.classList.add('out-of-turns');
                 
-                showModal(prizes[prizeIndex].name);
+                showModal(prizes[prizeIndex]);
             }, 5000); 
         }
 
-        function showModal(name) {
-            document.getElementById('prize-name').innerText = name;
+        function showModal(prizeObj) {
+            document.getElementById('prize-vi').innerText = prizeObj.vi;
+            document.getElementById('prize-en').innerText = prizeObj.en;
             document.getElementById('modal').style.display = 'flex';
         }
 
