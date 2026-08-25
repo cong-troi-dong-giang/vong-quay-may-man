@@ -153,10 +153,12 @@
             { vi: "QUẠT", en: "Hand Fan", weight: 30 }
         ];
 
-        const MAX_SPINS = 2; 
+        // Đã sửa lại giới hạn 1 lần quay
+        const MAX_SPINS = 1; 
         let isSpinning = false;
         let totalRotation = 0; 
         
+        // Key lưu trữ trong trình duyệt
         let spinCount = parseInt(localStorage.getItem('spin_dg_v2')) || 0;
 
         const wheel = document.getElementById('wheel');
@@ -168,7 +170,7 @@
         function startSpin() {
             if (isSpinning) return;
             if (spinCount >= MAX_SPINS) {
-                alert("Bạn đã tham gia đủ 2 lượt quay! \nYou have used all 2 turns!");
+                alert("Bạn đã hết lượt quay! \nYou have used your turn!");
                 return;
             }
 
