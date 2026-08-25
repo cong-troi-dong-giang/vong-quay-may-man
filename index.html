@@ -50,7 +50,7 @@
         .wheel-img {
             width: 100%;
             height: auto;
-            /* Thời gian 5s khớp hoàn toàn với file âm thanh bạn đã gửi */
+            /* Thời gian 5s khớp hoàn toàn với âm thanh bạn gửi */
             transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1);
             will-change: transform;
         }
@@ -66,7 +66,7 @@
             touch-action: manipulation;
         }
 
-        /* MODAL */
+        /* MODAL THÔNG BÁO */
         .modal-overlay {
             position: fixed; inset: 0;
             background: rgba(0,0,0,0.85);
@@ -86,19 +86,10 @@
         @keyframes zoomIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 
         .close-x { position: absolute; top: 15px; right: 20px; font-size: 30px; color: #ccc; cursor: pointer; }
-
         .modal-content h2 { color: var(--primary-green) !important; margin: 0; font-size: 22px; font-weight: 800; text-transform: uppercase; }
         .modal-content p { color: #444; font-size: 18px; margin: 20px 0 0; }
         .modal-content b { color: var(--prize-red) !important; font-size: 24px; display: block; margin-top: 15px; margin-bottom: 30px; font-weight: 800; }
-        
-        .zalo-btn {
-            display: inline-block;
-            background-color: var(--light-green); color: #004d26;
-            text-decoration: none; padding: 15px 20px;
-            border-radius: 12px; font-weight: 700; font-size: 12px;
-            text-transform: uppercase; border: 1px solid #a8e0a8;
-        }
-
+        .zalo-btn { display: inline-block; background-color: var(--light-green); color: #004d26; text-decoration: none; padding: 15px 20px; border-radius: 12px; font-weight: 700; font-size: 12px; text-transform: uppercase; border: 1px solid #a8e0a8; }
         .out-of-turns { filter: grayscale(1); cursor: not-allowed; opacity: 0.8; }
     </style>
 </head>
@@ -126,14 +117,18 @@
     </div>
 
     <script>
-        // Cấu hình mảng quà tặng: Thứ tự bắt đầu từ món ở Đỉnh (12h) và đi theo chiều KIM ĐỒNG HỒ
+        /**
+         * LƯU Ý QUAN TRỌNG ĐỂ KHỚP VỚI ẢNH:
+         * 1. Món quà đầu tiên (index 0) trong mảng phải là món quà nằm ở ĐỈNH vòng quay (vị trí 12h) trên ảnh gốc.
+         * 2. Thứ tự các món quà trong mảng phải liệt kê theo chiều KIM ĐỒNG HỒ trên hình ảnh.
+         */
         const prizes = [
-            { name: "TÚI VẢI", weight: 30 },             // 0° - 60° (Trung tâm: 30°)
-            { name: "MIỄN PHÍ VÉ THAM QUAN", weight: 5 }, // 60° - 120° (Trung tâm: 90°)
-            { name: "TÚI CÓI", weight: 15 },             // 120° - 180° (Trung tâm: 150°)
-            { name: "STICKER", weight: 15 },            // 180° - 240° (Trung tâm: 210°)
-            { name: "VOUCHER GIẢM 100K", weight: 5 },   // 240° - 300° (Trung tâm: 270°)
-            { name: "QUẠT", weight: 30 }                // 300° - 360° (Trung tâm: 330°)
+            { name: "TÚI VẢI", weight: 30 },             
+            { name: "MIỄN PHÍ VÉ THAM QUAN", weight: 5 }, 
+            { name: "TÚI CÓI", weight: 15 },             
+            { name: "STICKER", weight: 15 },            
+            { name: "VOUCHER GIẢM 100K", weight: 5 },   
+            { name: "QUẠT", weight: 30 }                
         ];
 
         const MAX_SPINS = 20;
@@ -160,7 +155,7 @@
             gameSound.currentTime = 0;
             gameSound.play().catch(e => {});
 
-            // 1. Thuật toán tỉ lệ
+            // 1. Thuật toán tỉ lệ ngẫu nhiên
             let totalWeight = prizes.reduce((sum, p) => sum + p.weight, 0);
             let random = Math.floor(Math.random() * totalWeight);
             let cumulativeWeight = 0;
@@ -174,35 +169,31 @@
                 }
             }
 
-            // 2. TOÁN HỌC QUAY CHÍNH XÁC
+            // 2. TÍNH TOÁN GÓC QUAY ĐỂ KHỚP ẢNH
             const segmentDeg = 360 / prizes.length; // 60 độ
             
-            // Tìm góc trung tâm của ô quà mục tiêu (Ví dụ: ô 0 là 30 độ)
-            const prizeCenter = (prizeIndex * segmentDeg) + (segmentDeg / 2);
+            // Góc trung tâm của ô quà trên ảnh (Ví dụ ô 0 là 30 độ)
+            const prizeCenterOnImage = (prizeIndex * segmentDeg) + (segmentDeg / 2);
             
-            // Công thức: Để đưa tâm của ô quà về vị trí 12h (0 độ hoặc 360 độ)
-            // Chúng ta phải quay ngược 1 khoảng prizeCenter so với mốc 360.
-            const stopAngle = 360 - prizeCenter;
+            // Để đưa tâm ô quà về Đỉnh (0 độ), ta cần xoay hình ảnh một góc: 360 - prizeCenterOnImage
+            const rotationNeeded = 360 - prizeCenterOnImage;
 
-            // Số vòng quay tối thiểu (5 vòng = 1800 độ)
+            // Số vòng quay tối thiểu (5 vòng = 1800 độ) cho đẹp
             const minSpins = 1800; 
 
-            // Tính toán totalRotation để vòng quay luôn quay tiếp (không quay ngược)
-            // Lấy góc hiện tại % 360 để biết kim đang ở đâu so với 0 độ
+            // Tính toán góc quay cộng dồn để vòng quay luôn quay xuôi chiều
             const currentActualAngle = totalRotation % 360;
+            let additionalDeg = (rotationNeeded - currentActualAngle + 360) % 360;
             
-            // Tính số độ cần thêm để tới điểm dừng mong muốn
-            let extraDeg = (stopAngle - currentActualAngle + 360) % 360;
-            
-            // Nếu góc quay thêm quá ít (dưới 10 độ), cho quay thêm 1 vòng nữa cho mượt
-            if (extraDeg < 10) extraDeg += 360;
+            // Đảm bảo vòng quay cuối cùng không bị quá ngắn (dưới 45 độ thì quay thêm 1 vòng)
+            if (additionalDeg < 45) additionalDeg += 360;
 
-            totalRotation += minSpins + extraDeg;
+            totalRotation += minSpins + additionalDeg;
 
             // 3. THỰC HIỆN QUAY
             wheel.style.transform = `rotate(${totalRotation}deg)`;
 
-            // 4. KẾT THÚC
+            // 4. HIỆN KẾT QUẢ (Sau 5 giây)
             setTimeout(() => {
                 isSpinning = false;
                 spinCount++;
@@ -210,7 +201,7 @@
                 if (spinCount >= MAX_SPINS) spinBtn.classList.add('out-of-turns');
                 
                 showModal(prizes[prizeIndex].name);
-            }, 5000); // 5 giây khớp CSS và âm thanh
+            }, 5000); 
         }
 
         function showModal(name) {
