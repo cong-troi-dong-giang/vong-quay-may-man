@@ -23,7 +23,7 @@
             overflow: hidden;
         }
 
-        /* 2. BỐ CỤC POSTER (Tối ưu Mobile 100%) */
+        /* 2. BỐ CỤC POSTER */
         .poster-container {
             position: relative;
             height: 100%;
@@ -40,20 +40,31 @@
             object-fit: contain;
         }
 
-        /* Vùng chứa vòng quay dùng % thay vì Pixel để tránh lỗi không quay trên điện thoại */
         .wheel-area {
             position: absolute;
             top: 65.3%; 
             left: 50%;
-            width: 89%; /* Khớp với bóng đèn trên poster */
+            width: 89%; 
             transform: translate(-50%, -50%);
             z-index: 5;
+        }
+
+        /* Kim chỉ quà (Pointer) - Đảm bảo nó ở đỉnh vòng quay */
+        .wheel-pointer {
+            position: absolute;
+            top: -20px; /* Điều chỉnh tùy theo hình ảnh */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 15;
+            width: 50px; /* Kích thước kim quay nếu bạn có file riêng */
+            display: none; /* Hiện tại đang dùng ảnh nền có sẵn kim hoặc nút bấm làm kim */
         }
 
         .wheel-img {
             width: 100%;
             height: auto;
-            transition: transform 5s cubic-bezier(0.1, 0, 0.1, 1);
+            /* Cubic-bezier giúp vòng quay dừng từ từ mượt mà hơn */
+            transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1);
             will-change: transform;
             -webkit-backface-visibility: hidden;
         }
@@ -69,7 +80,7 @@
             touch-action: manipulation;
         }
 
-        /* 3. MODAL NHẬN THƯỞNG */
+        /* 3. MODAL */
         .modal-overlay {
             position: fixed; inset: 0;
             background: rgba(0,0,0,0.85);
@@ -90,7 +101,6 @@
 
         .close-x { position: absolute; top: 15px; right: 20px; font-size: 30px; color: #ccc; cursor: pointer; }
 
-        /* Chữ Cổng Trời Đông Giang -> Màu Xanh Lá */
         .modal-content h2 { 
             color: var(--primary-green) !important; 
             margin: 0; font-size: 22px; font-weight: 800;
@@ -99,12 +109,11 @@
 
         .modal-content p { color: #444; font-size: 18px; margin: 20px 0 0; }
 
-        /* Tên quà tặng -> Màu Đỏ & Xịt xuống dưới */
         .modal-content b {
             color: var(--prize-red) !important; 
             font-size: 24px;
             display: block;
-            margin-top: 15px; /* Đẩy quà xịt xuống */
+            margin-top: 15px;
             margin-bottom: 30px;
             font-weight: 800;
         }
@@ -126,12 +135,13 @@
         <img src="nen-back.jpg" class="bg-img">
 
         <div class="wheel-area">
+            <!-- Vòng quay -->
             <img src="vong-xoay.png" id="wheel" class="wheel-img">
+            <!-- Nút bấm (Đồng thời là kim chỉ nếu đỉnh nút có mũi tên) -->
             <img src="nut-quay.png" class="start-btn" id="spin-button" onclick="startSpin()">
         </div>
     </div>
 
-    <!-- Modal Thông báo -->
     <div class="modal-overlay" id="modal">
         <div class="modal-content">
             <span class="close-x" onclick="closeModal()">&times;</span>
@@ -144,18 +154,20 @@
 
     <script>
         // --- CẤU HÌNH DỮ LIỆU ---
-        const MAX_SPINS = 20;
+        // Chú ý: Thứ tự trong mảng này phải khớp với thứ tự trên hình ảnh vong-xoay.png
+        // tính từ đỉnh vòng quay theo chiều KIM ĐỒNG HỒ.
         const prizes = [
-            { name: "TÚI VẢI", weight: 30 },    
-            { name: "MIỄN PHÍ VÉ THAM QUAN", weight: 5 }, 
-            { name: "TÚI CÓI", weight: 15 },   
-            { name: "STICKER", weight: 15 }, 
-            { name: "VOUCHER GIẢM 100K", weight: 5 },          
-            { name: "QUẠT", weight: 30 }       
+            { name: "TÚI VẢI", weight: 30 },             // Vị trí 1 (Đỉnh)
+            { name: "MIỄN PHÍ VÉ THAM QUAN", weight: 5 }, // Vị trí 2
+            { name: "TÚI CÓI", weight: 15 },             // Vị trí 3
+            { name: "STICKER", weight: 15 },            // Vị trí 4
+            { name: "VOUCHER GIẢM 100K", weight: 5 },   // Vị trí 5
+            { name: "QUẠT", weight: 30 }                // Vị trí 6
         ];
 
+        const MAX_SPINS = 20;
         let isSpinning = false;
-        let currentRotation = 0; 
+        let totalRotation = 0; // Lưu tổng góc quay tích lũy
         let spinCount = parseInt(localStorage.getItem('spin_dg_v20')) || 0;
 
         const wheel = document.getElementById('wheel');
@@ -163,7 +175,6 @@
 
         if (spinCount >= MAX_SPINS) spinBtn.classList.add('out-of-turns');
 
-        // --- LOGIC CHÍNH ---
         function startSpin() {
             if (isSpinning) return;
             if (spinCount >= MAX_SPINS) {
@@ -187,40 +198,16 @@
                 }
             }
 
-            // 2. Tính toán góc quay (Quay 1 chiều kim đồng hồ)
-            const segmentDeg = 360 / prizes.length; 
-            // Mũi tên ở vị trí 3 giờ (90 độ)
-            const stopOffset = 90 - (prizeIndex * segmentDeg) - (segmentDeg / 2);
+            // 2. TÍNH TOÁN GÓC QUAY CHÍNH XÁC
+            const segmentDeg = 360 / prizes.length; // 60 độ mỗi ô
             
-            // Luôn cộng thêm 3600 độ (10 vòng) vào góc hiện tại để đảm bảo quay xuôi chiều
-            const minSpins = 3600; 
-            const currentMod = currentRotation % 360;
-            let extraDeg = (stopOffset - currentMod + 360) % 360;
+            // Tính góc để phần thưởng nằm ở đỉnh (12 giờ)
+            // Nếu prizeIndex = 0 (Túi vải), góc mục tiêu là 0 hoặc 360
+            // Nếu quay theo chiều kim đồng hồ, ta dùng công thức:
+            const targetAngle = 360 - (prizeIndex * segmentDeg);
             
-            if (extraDeg < 60) extraDeg += 360; 
+            // Thêm một chút ngẫu nhiên để kim không luôn dừng ở chính giữa vạch (lệch tâm ô quà 5-10 độ cho tự nhiên)
+            const randomOffset = (Math.random() * (segmentDeg * 0.6)) - (segmentDeg * 0.3);
 
-            currentRotation += minSpins + extraDeg;
-            wheel.style.transform = `rotate(${currentRotation}deg)`;
-
-            // 3. Kết thúc quay
-            setTimeout(() => {
-                isSpinning = false;
-                spinCount++;
-                localStorage.setItem('spin_dg_v20', spinCount);
-                if (spinCount >= MAX_SPINS) spinBtn.classList.add('out-of-turns');
-                
-                showModal(prizes[prizeIndex].name);
-            }, 5200);
-        }
-
-        function showModal(name) {
-            document.getElementById('prize-name').innerText = name;
-            document.getElementById('modal').style.display = 'flex';
-        }
-
-        function closeModal() {
-            document.getElementById('modal').style.display = 'none';
-        }
-    </script>
-</body>
-</html>
+            // Số vòng quay tối thiểu (5 vòng = 1800 độ) để tạo hiệu ứng đẹp
+            const minSpins = 1800;
