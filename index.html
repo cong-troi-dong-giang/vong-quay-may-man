@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Vòng Quay May Mắn - Cổng Trời Đông Giang</title>
     <style>
-        /* --- GIỮ NGUYÊN CSS CỦA BẠN --- */
+        /* 1. HỆ THỐNG MÀU SẮC & CẤU TRÚC */
         :root {
             --primary-green: #014321;
             --prize-red: #e60000;
@@ -23,6 +23,7 @@
             overflow: hidden;
         }
 
+        /* 2. BỐ CỤC DISPLAY */
         .poster-container {
             position: relative;
             height: 100%;
@@ -51,6 +52,7 @@
         .wheel-img {
             width: 100%;
             height: auto;
+            /* Thời gian 5s khớp hoàn toàn với file âm thanh quay xổ số */
             transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1);
             will-change: transform;
             -webkit-backface-visibility: hidden;
@@ -65,8 +67,12 @@
             cursor: pointer;
             z-index: 10;
             touch-action: manipulation;
+            transition: transform 0.2s;
         }
 
+        .start-btn:active { transform: translate(-50%, -50%) scale(0.9); }
+
+        /* 3. MODAL THÔNG BÁO */
         .modal-overlay {
             position: fixed; inset: 0;
             background: rgba(0,0,0,0.85);
@@ -117,22 +123,22 @@
 </head>
 <body>
 
-    <!-- Khai báo âm thanh -->
-    <audio id="spinSound" preload="auto">
-        <source src="https://assets.mixkit.co/active_storage/sfx/2005/2005-preview.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="winSound" preload="auto">
-        <source src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3" type="audio/mpeg">
-    </audio>
+    <!-- Âm thanh duy nhất từ file bạn gửi -->
+    <audio id="gameSound" src="am-thanh.mp3" preload="auto"></audio>
 
     <div class="poster-container">
+        <!-- Ảnh nền Poster -->
         <img src="nen-back.jpg" class="bg-img">
+
         <div class="wheel-area">
+            <!-- Vòng quay hình ảnh -->
             <img src="vong-xoay.png" id="wheel" class="wheel-img">
+            <!-- Nút quay / Kim chỉ -->
             <img src="nut-quay.png" class="start-btn" id="spin-button" onclick="startSpin()">
         </div>
     </div>
 
+    <!-- Modal nhận quà -->
     <div class="modal-overlay" id="modal">
         <div class="modal-content">
             <span class="close-x" onclick="closeModal()">&times;</span>
@@ -144,13 +150,14 @@
     </div>
 
     <script>
+        // --- CẤU HÌNH QUÀ TẶNG (Phải khớp thứ tự trên ảnh từ Đỉnh quay theo chiều kim đồng hồ) ---
         const prizes = [
-            { name: "TÚI VẢI", weight: 30 },             
-            { name: "MIỄN PHÍ VÉ THAM QUAN", weight: 5 }, 
-            { name: "TÚI CÓI", weight: 15 },             
-            { name: "STICKER", weight: 15 },            
-            { name: "VOUCHER GIẢM 100K", weight: 5 },   
-            { name: "QUẠT", weight: 30 }                
+            { name: "TÚI VẢI", weight: 30 },             // Vị trí 0 độ (Đỉnh)
+            { name: "MIỄN PHÍ VÉ THAM QUAN", weight: 5 }, // Vị trí 60 độ
+            { name: "TÚI CÓI", weight: 15 },             // Vị trí 120 độ
+            { name: "STICKER", weight: 15 },            // Vị trí 180 độ
+            { name: "VOUCHER GIẢM 100K", weight: 5 },   // Vị trí 240 độ
+            { name: "QUẠT", weight: 30 }                // Vị trí 300 độ
         ];
 
         const MAX_SPINS = 20;
@@ -160,9 +167,9 @@
 
         const wheel = document.getElementById('wheel');
         const spinBtn = document.getElementById('spin-button');
-        const spinSound = document.getElementById('spinSound');
-        const winSound = document.getElementById('winSound');
+        const gameSound = document.getElementById('gameSound');
 
+        // Kiểm tra lượt quay khi load trang
         if (spinCount >= MAX_SPINS) spinBtn.classList.add('out-of-turns');
 
         function startSpin() {
@@ -174,10 +181,11 @@
 
             isSpinning = true;
 
-            // PHÁT ÂM THANH QUAY
-            spinSound.currentTime = 0;
-            spinSound.play().catch(error => console.log("Yêu cầu tương tác người dùng để phát âm thanh"));
+            // 1. PHÁT ÂM THANH (Tiếng quay 5s đầu sẽ khớp với chuyển động)
+            gameSound.currentTime = 0;
+            gameSound.play().catch(e => console.log("Cần click để phát nhạc"));
 
+            // 2. THUẬT TOÁN TỈ LỆ (Weighted Random)
             let totalWeight = prizes.reduce((sum, p) => sum + p.weight, 0);
             let random = Math.floor(Math.random() * totalWeight);
             let cumulativeWeight = 0;
@@ -191,28 +199,36 @@
                 }
             }
 
-            const segmentDeg = 360 / prizes.length; 
+            // 3. TÍNH TOÁN GÓC QUAY ĐỂ KIM DỪNG ĐÚNG Ô
+            const segmentDeg = 360 / prizes.length; // 60 độ mỗi ô
+            
+            // Tính góc dừng sao cho ô prizeIndex nằm ở Đỉnh (12h)
+            // Công thức: (Vòng quay hiện tại) + (Ít nhất 5 vòng mới) + (Góc bù để trúng ô)
             const targetAngle = 360 - (prizeIndex * segmentDeg);
-            const randomOffset = (Math.random() * (segmentDeg * 0.6)) - (segmentDeg * 0.3);
-            const minSpins = 1800; 
+            
+            // Thêm chút ngẫu nhiên để kim không dừng mãi một chỗ giữa ô (lệch nhẹ 10-20 độ)
+            const randomOffset = (Math.random() * (segmentDeg * 0.4)) - (segmentDeg * 0.2);
+            
+            const minSpins = 1800; // Quay tối thiểu 5 vòng (360 * 5)
+            
+            // Tổng góc quay tích lũy
+            const currentExtra = minSpins + targetAngle + randomOffset;
+            totalRotation += currentExtra;
 
-            totalRotation += minSpins + targetAngle + randomOffset;
+            // Thực hiện hiệu ứng quay CSS
             wheel.style.transform = `rotate(${totalRotation}deg)`;
 
-            // Kết thúc quay sau 5 giây (khớp với CSS transition)
+            // 4. KẾT THÚC (Sau 5 giây)
             setTimeout(() => {
                 isSpinning = false;
                 
-                // DỪNG NHẠC QUAY - PHÁT NHẠC THẮNG
-                spinSound.pause();
-                winSound.play().catch(e => {});
-
+                // Tiếng vỗ tay trong file của bạn sẽ vang lên lúc này
                 spinCount++;
                 localStorage.setItem('spin_dg_v20', spinCount);
                 if (spinCount >= MAX_SPINS) spinBtn.classList.add('out-of-turns');
                 
                 showModal(prizes[prizeIndex].name);
-            }, 5000); 
+            }, 5000); // 5000ms = 5s
         }
 
         function showModal(name) {
@@ -222,6 +238,7 @@
 
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
+            // Không tắt nhạc ngay để tiếng vỗ tay được vang hết
         }
     </script>
 </body>
