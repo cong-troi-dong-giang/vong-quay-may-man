@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Vòng Quay May Mắn - Cổng Trời Đông Giang</title>
     <style>
-        /* 1. KHAI BÁO BIẾN & THIẾT LẬP HỆ THỐNG */
+        /* --- GIỮ NGUYÊN CSS CỦA BẠN --- */
         :root {
             --primary-green: #014321;
             --prize-red: #e60000;
@@ -23,7 +23,6 @@
             overflow: hidden;
         }
 
-        /* 2. BỐ CỤC POSTER */
         .poster-container {
             position: relative;
             height: 100%;
@@ -49,21 +48,9 @@
             z-index: 5;
         }
 
-        /* Kim chỉ quà (Pointer) - Đảm bảo nó ở đỉnh vòng quay */
-        .wheel-pointer {
-            position: absolute;
-            top: -20px; /* Điều chỉnh tùy theo hình ảnh */
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 15;
-            width: 50px; /* Kích thước kim quay nếu bạn có file riêng */
-            display: none; /* Hiện tại đang dùng ảnh nền có sẵn kim hoặc nút bấm làm kim */
-        }
-
         .wheel-img {
             width: 100%;
             height: auto;
-            /* Cubic-bezier giúp vòng quay dừng từ từ mượt mà hơn */
             transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1);
             will-change: transform;
             -webkit-backface-visibility: hidden;
@@ -80,7 +67,6 @@
             touch-action: manipulation;
         }
 
-        /* 3. MODAL */
         .modal-overlay {
             position: fixed; inset: 0;
             background: rgba(0,0,0,0.85);
@@ -131,13 +117,18 @@
 </head>
 <body>
 
+    <!-- Khai báo âm thanh -->
+    <audio id="spinSound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2005/2005-preview.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="winSound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3" type="audio/mpeg">
+    </audio>
+
     <div class="poster-container">
         <img src="nen-back.jpg" class="bg-img">
-
         <div class="wheel-area">
-            <!-- Vòng quay -->
             <img src="vong-xoay.png" id="wheel" class="wheel-img">
-            <!-- Nút bấm (Đồng thời là kim chỉ nếu đỉnh nút có mũi tên) -->
             <img src="nut-quay.png" class="start-btn" id="spin-button" onclick="startSpin()">
         </div>
     </div>
@@ -153,25 +144,24 @@
     </div>
 
     <script>
-        // --- CẤU HÌNH DỮ LIỆU ---
-        // Chú ý: Thứ tự trong mảng này phải khớp với thứ tự trên hình ảnh vong-xoay.png
-        // tính từ đỉnh vòng quay theo chiều KIM ĐỒNG HỒ.
         const prizes = [
-            { name: "TÚI VẢI", weight: 30 },             // Vị trí 1 (Đỉnh)
-            { name: "MIỄN PHÍ VÉ THAM QUAN", weight: 5 }, // Vị trí 2
-            { name: "TÚI CÓI", weight: 15 },             // Vị trí 3
-            { name: "STICKER", weight: 15 },            // Vị trí 4
-            { name: "VOUCHER GIẢM 100K", weight: 5 },   // Vị trí 5
-            { name: "QUẠT", weight: 30 }                // Vị trí 6
+            { name: "TÚI VẢI", weight: 30 },             
+            { name: "MIỄN PHÍ VÉ THAM QUAN", weight: 5 }, 
+            { name: "TÚI CÓI", weight: 15 },             
+            { name: "STICKER", weight: 15 },            
+            { name: "VOUCHER GIẢM 100K", weight: 5 },   
+            { name: "QUẠT", weight: 30 }                
         ];
 
         const MAX_SPINS = 20;
         let isSpinning = false;
-        let totalRotation = 0; // Lưu tổng góc quay tích lũy
+        let totalRotation = 0; 
         let spinCount = parseInt(localStorage.getItem('spin_dg_v20')) || 0;
 
         const wheel = document.getElementById('wheel');
         const spinBtn = document.getElementById('spin-button');
+        const spinSound = document.getElementById('spinSound');
+        const winSound = document.getElementById('winSound');
 
         if (spinCount >= MAX_SPINS) spinBtn.classList.add('out-of-turns');
 
@@ -184,7 +174,10 @@
 
             isSpinning = true;
 
-            // 1. Thuật toán tỉ lệ trúng thưởng (Weighted Random)
+            // PHÁT ÂM THANH QUAY
+            spinSound.currentTime = 0;
+            spinSound.play().catch(error => console.log("Yêu cầu tương tác người dùng để phát âm thanh"));
+
             let totalWeight = prizes.reduce((sum, p) => sum + p.weight, 0);
             let random = Math.floor(Math.random() * totalWeight);
             let cumulativeWeight = 0;
@@ -198,16 +191,38 @@
                 }
             }
 
-            // 2. TÍNH TOÁN GÓC QUAY CHÍNH XÁC
-            const segmentDeg = 360 / prizes.length; // 60 độ mỗi ô
-            
-            // Tính góc để phần thưởng nằm ở đỉnh (12 giờ)
-            // Nếu prizeIndex = 0 (Túi vải), góc mục tiêu là 0 hoặc 360
-            // Nếu quay theo chiều kim đồng hồ, ta dùng công thức:
+            const segmentDeg = 360 / prizes.length; 
             const targetAngle = 360 - (prizeIndex * segmentDeg);
-            
-            // Thêm một chút ngẫu nhiên để kim không luôn dừng ở chính giữa vạch (lệch tâm ô quà 5-10 độ cho tự nhiên)
             const randomOffset = (Math.random() * (segmentDeg * 0.6)) - (segmentDeg * 0.3);
+            const minSpins = 1800; 
 
-            // Số vòng quay tối thiểu (5 vòng = 1800 độ) để tạo hiệu ứng đẹp
-            const minSpins = 1800;
+            totalRotation += minSpins + targetAngle + randomOffset;
+            wheel.style.transform = `rotate(${totalRotation}deg)`;
+
+            // Kết thúc quay sau 5 giây (khớp với CSS transition)
+            setTimeout(() => {
+                isSpinning = false;
+                
+                // DỪNG NHẠC QUAY - PHÁT NHẠC THẮNG
+                spinSound.pause();
+                winSound.play().catch(e => {});
+
+                spinCount++;
+                localStorage.setItem('spin_dg_v20', spinCount);
+                if (spinCount >= MAX_SPINS) spinBtn.classList.add('out-of-turns');
+                
+                showModal(prizes[prizeIndex].name);
+            }, 5000); 
+        }
+
+        function showModal(name) {
+            document.getElementById('prize-name').innerText = name;
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
