@@ -50,7 +50,6 @@
         .wheel-img {
             width: 100%;
             height: auto;
-            /* 5 giây khớp với âm thanh bạn gửi */
             transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1);
             will-change: transform;
         }
@@ -66,7 +65,6 @@
             touch-action: manipulation;
         }
 
-        /* MODAL THÔNG BÁO */
         .modal-overlay {
             position: fixed; inset: 0;
             background: rgba(0,0,0,0.85);
@@ -95,13 +93,15 @@
 </head>
 <body>
 
-    <audio id="gameSound" src="am-thanh.mp3" preload="auto"></audio>
+    <!-- ĐÃ ĐỔI TÊN THÀNH am-thanh.MP3 ĐỂ KHỚP ẢNH BẠN GỬI -->
+    <audio id="gameSound" preload="auto">
+        <source src="am-thanh.MP3" type="audio/mpeg">
+    </audio>
 
     <div class="poster-container">
         <img src="nen-back.jpg" class="bg-img">
         <div class="wheel-area">
             <img src="vong-xoay.png" id="wheel" class="wheel-img">
-            <!-- Nút bấm có mũi tên chỉ sang hướng 3h -->
             <img src="nut-quay.png" class="start-btn" id="spin-button" onclick="startSpin()">
         </div>
     </div>
@@ -117,14 +117,13 @@
     </div>
 
     <script>
-        // MẢNG QUÀ TẶNG KHỚP 100% THEO CHIỀU KIM ĐỒNG HỒ TỪ ĐỈNH (12h)
         const prizes = [
-            { name: "TÚI VẢI", weight: 30 },                             // 0 - 60 độ
-            { name: "VOUCHER MIỄN PHÍ VÉ THAM QUAN", weight: 5 },        // 60 - 120 độ
-            { name: "TÚI CÓI", weight: 15 },                             // 120 - 180 độ
-            { name: "STICKER", weight: 15 },                            // 180 - 240 độ
-            { name: "VOUCHER GIẢM 100K", weight: 5 },                   // 240 - 300 độ
-            { name: "QUẠT", weight: 30 }                                 // 300 - 360 độ
+            { name: "TÚI VẢI", weight: 30 },                             
+            { name: "VOUCHER MIỄN PHÍ VÉ THAM QUAN", weight: 5 },        
+            { name: "TÚI CÓI", weight: 15 },                             
+            { name: "STICKER", weight: 15 },                            
+            { name: "VOUCHER GIẢM 100K", weight: 5 },                   
+            { name: "QUẠT", weight: 30 }                                 
         ];
 
         const MAX_SPINS = 20;
@@ -146,8 +145,18 @@
             }
 
             isSpinning = true;
-            gameSound.currentTime = 0;
-            gameSound.play().catch(e => {});
+
+            // XỬ LÝ ÂM THANH CHUYÊN NGHIỆP
+            gameSound.pause(); // Dừng lại nếu đang phát dở
+            gameSound.currentTime = 0; // Quay về giây số 0
+            
+            // Kích hoạt phát nhạc (Phải nằm trong sự kiện click như này trình duyệt mới cho phép)
+            const playPromise = gameSound.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.log("Âm thanh bị chặn hoặc file không tồn tại: ", error);
+                });
+            }
 
             // 1. Thuật toán chọn quà
             let totalWeight = prizes.reduce((sum, p) => sum + p.weight, 0);
@@ -163,32 +172,28 @@
                 }
             }
 
-            // 2. TOÁN HỌC CHÍNH XÁC CHO KIM Ở HƯỚNG 3 GIỜ (90 ĐỘ)
-            const segmentDeg = 60; // 360 / 6 ô
-            const pointerAngle = 90; // Kim (mũi tên vàng) nằm bên phải
+            // 2. TOÁN HỌC DÀNH CHO KIM 3 GIỜ (Bên phải)
+            const segmentDeg = 60; 
+            const pointerAngle = 90; // Kim mũi tên vàng chỉ sang phải
             
-            // Tâm của ô quà mục tiêu tính từ đỉnh (0 độ)
+            // Góc của ô quà hiện tại tính từ đỉnh 12h
             const targetSliceCenter = (prizeIndex * segmentDeg) + (segmentDeg / 2);
             
-            // Góc quay cần thiết để đưa 'targetSliceCenter' về đúng vị trí 'pointerAngle'
-            const finalAngle = (pointerAngle - targetSliceCenter + 360) % 360;
+            // Góc cần quay để đưa ô đó về vị trí 90 độ (kim bên phải)
+            const targetAngle = (pointerAngle - targetSliceCenter + 360) % 360;
 
-            // Số vòng quay tối thiểu (5 vòng)
-            const minSpins = 1800; 
-
-            // Cộng dồn để vòng quay luôn quay xuôi chiều
+            const minSpins = 1800; // Quay 5 vòng
             const currentMod = totalRotation % 360;
-            let extraDeg = (finalAngle - currentMod + 360) % 360;
+            let extraDeg = (targetAngle - currentMod + 360) % 360;
             
-            // Đảm bảo không quay quá ngắn
             if (extraDeg < 45) extraDeg += 360;
 
             totalRotation += minSpins + extraDeg;
 
-            // 3. XOAY
+            // XOAY
             wheel.style.transform = `rotate(${totalRotation}deg)`;
 
-            // 4. HIỆN KẾT QUẢ
+            // 3. HIỆN KẾT QUẢ
             setTimeout(() => {
                 isSpinning = false;
                 spinCount++;
