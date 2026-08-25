@@ -50,7 +50,7 @@
         .wheel-img {
             width: 100%;
             height: auto;
-            /* Thời gian 5s khớp hoàn toàn với âm thanh bạn gửi */
+            /* 5 giây khớp với âm thanh bạn gửi */
             transition: transform 5s cubic-bezier(0.15, 0, 0.15, 1);
             will-change: transform;
         }
@@ -88,20 +88,20 @@
         .close-x { position: absolute; top: 15px; right: 20px; font-size: 30px; color: #ccc; cursor: pointer; }
         .modal-content h2 { color: var(--primary-green) !important; margin: 0; font-size: 22px; font-weight: 800; text-transform: uppercase; }
         .modal-content p { color: #444; font-size: 18px; margin: 20px 0 0; }
-        .modal-content b { color: var(--prize-red) !important; font-size: 24px; display: block; margin-top: 15px; margin-bottom: 30px; font-weight: 800; }
+        .modal-content b { color: var(--prize-red) !important; font-size: 22px; display: block; margin-top: 15px; margin-bottom: 30px; font-weight: 800; }
         .zalo-btn { display: inline-block; background-color: var(--light-green); color: #004d26; text-decoration: none; padding: 15px 20px; border-radius: 12px; font-weight: 700; font-size: 12px; text-transform: uppercase; border: 1px solid #a8e0a8; }
         .out-of-turns { filter: grayscale(1); cursor: not-allowed; opacity: 0.8; }
     </style>
 </head>
 <body>
 
-    <!-- File âm thanh mp3 của bạn -->
     <audio id="gameSound" src="am-thanh.mp3" preload="auto"></audio>
 
     <div class="poster-container">
         <img src="nen-back.jpg" class="bg-img">
         <div class="wheel-area">
             <img src="vong-xoay.png" id="wheel" class="wheel-img">
+            <!-- Nút bấm có mũi tên chỉ sang hướng 3h -->
             <img src="nut-quay.png" class="start-btn" id="spin-button" onclick="startSpin()">
         </div>
     </div>
@@ -117,18 +117,14 @@
     </div>
 
     <script>
-        /**
-         * LƯU Ý QUAN TRỌNG ĐỂ KHỚP VỚI ẢNH:
-         * 1. Món quà đầu tiên (index 0) trong mảng phải là món quà nằm ở ĐỈNH vòng quay (vị trí 12h) trên ảnh gốc.
-         * 2. Thứ tự các món quà trong mảng phải liệt kê theo chiều KIM ĐỒNG HỒ trên hình ảnh.
-         */
+        // MẢNG QUÀ TẶNG KHỚP 100% THEO CHIỀU KIM ĐỒNG HỒ TỪ ĐỈNH (12h)
         const prizes = [
-            { name: "TÚI VẢI", weight: 30 },             
-            { name: "MIỄN PHÍ VÉ THAM QUAN", weight: 5 }, 
-            { name: "TÚI CÓI", weight: 15 },             
-            { name: "STICKER", weight: 15 },            
-            { name: "VOUCHER GIẢM 100K", weight: 5 },   
-            { name: "QUẠT", weight: 30 }                
+            { name: "TÚI VẢI", weight: 30 },                             // 0 - 60 độ
+            { name: "VOUCHER MIỄN PHÍ VÉ THAM QUAN", weight: 5 },        // 60 - 120 độ
+            { name: "TÚI CÓI", weight: 15 },                             // 120 - 180 độ
+            { name: "STICKER", weight: 15 },                            // 180 - 240 độ
+            { name: "VOUCHER GIẢM 100K", weight: 5 },                   // 240 - 300 độ
+            { name: "QUẠT", weight: 30 }                                 // 300 - 360 độ
         ];
 
         const MAX_SPINS = 20;
@@ -150,12 +146,10 @@
             }
 
             isSpinning = true;
-
-            // PHÁT ÂM THANH
             gameSound.currentTime = 0;
             gameSound.play().catch(e => {});
 
-            // 1. Thuật toán tỉ lệ ngẫu nhiên
+            // 1. Thuật toán chọn quà
             let totalWeight = prizes.reduce((sum, p) => sum + p.weight, 0);
             let random = Math.floor(Math.random() * totalWeight);
             let cumulativeWeight = 0;
@@ -169,31 +163,32 @@
                 }
             }
 
-            // 2. TÍNH TOÁN GÓC QUAY ĐỂ KHỚP ẢNH
-            const segmentDeg = 360 / prizes.length; // 60 độ
+            // 2. TOÁN HỌC CHÍNH XÁC CHO KIM Ở HƯỚNG 3 GIỜ (90 ĐỘ)
+            const segmentDeg = 60; // 360 / 6 ô
+            const pointerAngle = 90; // Kim (mũi tên vàng) nằm bên phải
             
-            // Góc trung tâm của ô quà trên ảnh (Ví dụ ô 0 là 30 độ)
-            const prizeCenterOnImage = (prizeIndex * segmentDeg) + (segmentDeg / 2);
+            // Tâm của ô quà mục tiêu tính từ đỉnh (0 độ)
+            const targetSliceCenter = (prizeIndex * segmentDeg) + (segmentDeg / 2);
             
-            // Để đưa tâm ô quà về Đỉnh (0 độ), ta cần xoay hình ảnh một góc: 360 - prizeCenterOnImage
-            const rotationNeeded = 360 - prizeCenterOnImage;
+            // Góc quay cần thiết để đưa 'targetSliceCenter' về đúng vị trí 'pointerAngle'
+            const finalAngle = (pointerAngle - targetSliceCenter + 360) % 360;
 
-            // Số vòng quay tối thiểu (5 vòng = 1800 độ) cho đẹp
+            // Số vòng quay tối thiểu (5 vòng)
             const minSpins = 1800; 
 
-            // Tính toán góc quay cộng dồn để vòng quay luôn quay xuôi chiều
-            const currentActualAngle = totalRotation % 360;
-            let additionalDeg = (rotationNeeded - currentActualAngle + 360) % 360;
+            // Cộng dồn để vòng quay luôn quay xuôi chiều
+            const currentMod = totalRotation % 360;
+            let extraDeg = (finalAngle - currentMod + 360) % 360;
             
-            // Đảm bảo vòng quay cuối cùng không bị quá ngắn (dưới 45 độ thì quay thêm 1 vòng)
-            if (additionalDeg < 45) additionalDeg += 360;
+            // Đảm bảo không quay quá ngắn
+            if (extraDeg < 45) extraDeg += 360;
 
-            totalRotation += minSpins + additionalDeg;
+            totalRotation += minSpins + extraDeg;
 
-            // 3. THỰC HIỆN QUAY
+            // 3. XOAY
             wheel.style.transform = `rotate(${totalRotation}deg)`;
 
-            // 4. HIỆN KẾT QUẢ (Sau 5 giây)
+            // 4. HIỆN KẾT QUẢ
             setTimeout(() => {
                 isSpinning = false;
                 spinCount++;
